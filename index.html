@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ทดสอบการเชื่อมต่อคอม</title>
+<style>
+  :root{color-scheme:dark}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px;
+       font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#eef3ff;
+       background:radial-gradient(circle at top,#1b3154 0,#0b1220 52%,#070b13 100%)}
+  main{width:min(100%,520px);padding:24px;border:1px solid #344767;border-radius:22px;
+       background:#101a2bcc;box-shadow:0 20px 70px #0008}
+  h1{font-size:1.35rem;margin:0 0 8px}
+  p{color:#b8c6dd;line-height:1.6}
+  code{overflow-wrap:anywhere;color:#a9e8ff}
+  button{width:100%;border:0;border-radius:12px;padding:14px;margin:10px 0;
+         font-size:1rem;font-weight:700;color:#07111f;background:linear-gradient(90deg,#80e8ff,#8fffc7)}
+  #result{padding:14px;border:1px solid #344767;border-radius:12px;background:#0a1220;white-space:pre-wrap;overflow-wrap:anywhere}
+  .small{font-size:.88rem}
+</style>
+</head>
+<body>
+<main>
+  <h1>ทดสอบการเชื่อมต่อกับคอม</h1>
+  <p>ปลายทางที่ทดสอบ: <code>http://192.168.1.7:8080/api/status</code></p>
+  <button id="test">ทดสอบการเชื่อมต่อ</button>
+  <div id="result" role="status">ยังไม่ได้ทดสอบ</div>
+  <p class="small">หน้านี้ทดสอบอ่านสถานะเท่านั้น ไม่ส่งคำสั่งปรับค่าเกม</p>
+</main>
+<script>
+const endpoint = 'http://192.168.1.7:8080/api/status';
+const result = document.getElementById('result');
+document.getElementById('test').addEventListener('click', async () => {
+  result.textContent = 'กำลังทดสอบ...';
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 7000);
+  try {
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      mode: 'cors',
+      cache: 'no-store',
+      signal: controller.signal
+    });
+    const body = await response.text();
+    if (!response.ok) {
+      result.textContent = `เชื่อมถึงเซิร์ฟเวอร์ แต่ตอบกลับ HTTP ${response.status}\n${body.slice(0,800)}`;
+    } else {
+      result.textContent = `ได้รับคำตอบจาก API แล้ว (HTTP ${response.status})\n${body.slice(0,1200)}`;
+    }
+  } catch (e) {
+    result.textContent = 'ทดสอบไม่สำเร็จ\n' +
+      (e.name === 'AbortError' ? 'หมดเวลารอคำตอบ' : String(e)) +
+      '\n\nถ้าเปิดหน้านี้จาก HTTPS แล้วเรียก API ผ่าน HTTP เบราว์เซอร์อาจบล็อกคำขอได้ แม้มือถือจะอยู่ Wi‑Fi เดียวกับคอม';
+  } finally {
+    clearTimeout(timer);
+  }
+});
+</script>
+</body>
+</html>
